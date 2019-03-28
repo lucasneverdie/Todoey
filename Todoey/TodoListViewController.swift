@@ -11,10 +11,18 @@ import UIKit
 class TodoListViewController: UITableViewController {
     
     var itemArray = ["第一個","第二個","第三個"]
+    
+    var mydefaults = UserDefaults.standard
 
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
+        
+        //把存在裝置的 user default 抓回來餵給 itemArray
+        if let items = mydefaults.array(forKey:"TodoListArray") as? [String] {
+            itemArray = items
+        }
+        
     }
     
     
@@ -72,6 +80,8 @@ class TodoListViewController: UITableViewController {
             //print("點了增加項目按鈕")
             //print(想要新增的項目.text!)
             self.itemArray.append(想要新增的項目.text!)
+            
+            self.mydefaults.set(self.itemArray, forKey: "TodoListArray")
             
             self.tableView.reloadData()
             
