@@ -35,6 +35,12 @@
                     </tableView>
                     <navigationItem key="navigationItem" title="TItle" id="UiI-2G-Bxf">
                         <barButtonItem key="backBarButtonItem" title="123" id="SKH-Yy-DGM"/>
+                        <barButtonItem key="rightBarButtonItem" systemItem="add" id="irZ-a2-fKd">
+                            <color key="tintColor" red="0.99999600649999998" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                            <connections>
+                                <action selector="addButtonPressed:" destination="kJK-FE-whJ" id="DXt-uO-Zbd"/>
+                            </connections>
+                        </barButtonItem>
                     </navigationItem>
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="EPq-pw-dqt" userLabel="First Responder" sceneMemberID="firstResponder"/>

@@ -10,7 +10,7 @@ import UIKit
 
 class TodoListViewController: UITableViewController {
     
-    let itemArray = ["第一個","第二個","第三個"]
+    var itemArray = ["第一個","第二個","第三個"]
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -58,6 +58,35 @@ class TodoListViewController: UITableViewController {
         tableView.deselectRow(at: indexPath, animated: true)
         
     }
+    
+    
+    
+    
+    @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
+        
+        var 想要新增的項目 : UITextField = UITextField()
+        
+        let alert = UIAlertController(title: "Add Item", message: "", preferredStyle: .alert)
+        
+        let action = UIAlertAction(title: "增加項目", style: .default) { (action) in
+            //print("點了增加項目按鈕")
+            //print(想要新增的項目.text!)
+            self.itemArray.append(想要新增的項目.text!)
+            
+            self.tableView.reloadData()
+            
+        }
+        
+        alert.addTextField { (textField) in
+            textField.placeholder = "新增項目名稱"
+            想要新增的項目 = textField
+        }
+        
+        alert.addAction(action)
+        
+        self.present(alert, animated: true, completion: nil)
+    }
+    
     
 
 }
