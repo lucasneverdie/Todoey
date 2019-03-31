@@ -12,32 +12,20 @@ class TodoListViewController: UITableViewController {
     
     var itemArray = [Item]()
     
-    var mydefaults = UserDefaults.standard
+    
+    //creatie a file path to the documents folder
+    //創建資料夾的檔案路徑？ 創立檔案路徑給資料夾？
+    // FileManager.default 也是一個 singleton
+    // 因為這是一個 array 所以first (集合的第一個元素)
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Item.plist")
+    
+
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         
-        
-        let newItem = Item()
-        newItem.title = "find"
-        itemArray.append(newItem)
-        
-        let newItem2 = Item()
-        newItem2.title = "find"
-        itemArray.append(newItem2)
-        
-        let newItem3 = Item()
-        newItem3.title = "find"
-        itemArray.append(newItem3)
-        
-        
-        
-        
-        // 把存在裝置的 user default 抓回來餵給 itemArray
-        if let items = mydefaults.array(forKey:"TodoListArray") as? [Item] {
-            itemArray = items
-        }
+        loadItems()
         
     }
     
@@ -85,25 +73,7 @@ class TodoListViewController: UITableViewController {
         //這一句跟下面五句是一樣的
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
         
-        //        if itemArray[indexPath.row].done == false {
-        //            itemArray[indexPath.row].done = true
-        //        }
-        //        else {
-        //            itemArray[indexPath.row].done = false
-        //        }
-        
-        
-        //tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
-        
-        
-        //已經點了再點一次會取消，反之相反
-        //        if tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark{
-        //            tableView.cellForRow(at: indexPath)?.accessoryType = .none
-        //        }
-        //        else{
-        //            tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
-        //        }
-        
+        saveItems()
         
         tableView.reloadData()
         
@@ -133,9 +103,7 @@ class TodoListViewController: UITableViewController {
             //print(想要新增的項目.text!)
             self.itemArray.append(newItem)
             
-            self.mydefaults.set(self.itemArray, forKey: "TodoListArray")
-            
-            self.tableView.reloadData()
+            self.saveItems()
             
         }
         
@@ -147,6 +115,34 @@ class TodoListViewController: UITableViewController {
         alert.addAction(action)
         
         self.present(alert, animated: true, completion: nil)
+    }
+    
+    
+    // MARK - model manupulation methods
+    
+    func saveItems(){
+        //編碼器
+        let encoder = PropertyListEncoder()
+        
+        do{
+            let data = try encoder.encode(itemArray)
+            try data.write(to:dataFilePath!)
+        }catch{
+            print("erro encoding item array, \(error)")
+        }
+        
+        tableView.reloadData()
+    }
+    
+    func loadItems(){
+        if let data = try? Data(contentsOf: dataFilePath!){
+            let decoder = PropertyListDecoder()
+            do{
+                itemArray = try decoder.decode([Item].self, from: data)
+            }catch{
+                print("loadItems錯誤, \(error)")
+            }
+        }
     }
     
     
