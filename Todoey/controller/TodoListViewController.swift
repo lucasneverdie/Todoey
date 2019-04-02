@@ -7,25 +7,27 @@
 //
 
 import UIKit
+import CoreData
 
 class TodoListViewController: UITableViewController {
     
     var itemArray = [Item]()
     
-    
-    //creatie a file path to the documents folder
-    //創建資料夾的檔案路徑？ 創立檔案路徑給資料夾？
-    // FileManager.default 也是一個 singleton
-    // 因為這是一個 array 所以first (集合的第一個元素)
-    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Item.plist")
-    
-
+    // AppDelegate 是 class 是藍圖，我們創立一個物件來使用
+    // UIApplication.shared 是一個 singleton 的 app 實體
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         
+        
+        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
+        
+        
+        
         loadItems()
+        
         
     }
     
@@ -40,7 +42,7 @@ class TodoListViewController: UITableViewController {
     
     //製作內容
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        
+        //print("cellForRowAt indexPath=\(indexPath)")
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
         
@@ -49,16 +51,7 @@ class TodoListViewController: UITableViewController {
         
         cell.textLabel?.text = item.title
         
-        
         cell.accessoryType = item.done ? .checkmark : .none
-        
-        
-        //        if item.done == true{
-        //            cell.accessoryType = .checkmark
-        //        }else{
-        //            cell.accessoryType = .none
-        //        }
-        //
         
         return cell
         
@@ -67,15 +60,26 @@ class TodoListViewController: UITableViewController {
     //MARK - TableView Delegate Methods
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        //print("didSelectRowAt indexPath= \(indexPath)")
+        //print("itemArray[indexPath.row]= \(itemArray[indexPath.row])")
         
-        //print(itemArray[indexPath.row])
+        //update 就是使用 setValue
+        //itemArray[indexPath.row].setValue("新給得值", forKey: "title")
+        //這樣也可以 setValue
+        //itemArray[indexPath.row].done = !itemArray[indexPath.row].done
         
-        //這一句跟下面五句是一樣的
-        itemArray[indexPath.row].done = !itemArray[indexPath.row].done
+        
+        //刪除
+        //刪除 context 的先
+        //context.delete(itemArray[indexPath.row])
+        //刪除array，注意這邊跟 Core Data 無關，這邊是我們自己建立的 Array
+        //itemArray.remove(at: indexPath.row)
+        
+        
+        
+        //
         
         saveItems()
-        
-        tableView.reloadData()
         
         
         //加上動畫
@@ -96,8 +100,15 @@ class TodoListViewController: UITableViewController {
         
         let action = UIAlertAction(title: "增加項目", style: .default) { (action) in
             
-            let newItem = Item()
+            
+            
+            //這邊是建立一個 Item 類別是 NSManagedObject
+            //所以他其實是表格裡面的 row
+            //後面的 self.context 是在上面自己創立的那一個，所以這一句我們已經改變了這個 context
+            //給他多加一個 Item 進去了
+            let newItem = Item(context: self.context)
             newItem.title = 想要新增的項目.text!
+            newItem.done = false
             
             //print("點了增加項目按鈕")
             //print(想要新增的項目.text!)
@@ -121,28 +132,28 @@ class TodoListViewController: UITableViewController {
     // MARK - model manupulation methods
     
     func saveItems(){
-        //編碼器
-        let encoder = PropertyListEncoder()
         
         do{
-            let data = try encoder.encode(itemArray)
-            try data.write(to:dataFilePath!)
+            try context.save()
         }catch{
-            print("erro encoding item array, \(error)")
+            print("error saving context \(error)")
         }
         
         tableView.reloadData()
     }
     
     func loadItems(){
-        if let data = try? Data(contentsOf: dataFilePath!){
-            let decoder = PropertyListDecoder()
-            do{
-                itemArray = try decoder.decode([Item].self, from: data)
-            }catch{
-                print("loadItems錯誤, \(error)")
-            }
+        
+        //這個 Item 是類別，一般不用寫類別，但是這邊要
+        let request : NSFetchRequest<Item> = Item.fetchRequest()
+        do{
+            //所以我們這邊要抓取的是一個 Item 他是 NSManagedObject 類別，所以就是一個 row
+            itemArray = try context.fetch(request)
+        } catch {
+            print("Error fetching data from context \(error)")
         }
+        
+        
     }
     
     
