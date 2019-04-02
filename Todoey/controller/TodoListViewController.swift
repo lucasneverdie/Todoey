@@ -24,15 +24,13 @@ class TodoListViewController: UITableViewController {
         
         print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         
-        
-        
+
         loadItems()
-        
         
     }
     
     
-    //MARK - TableView Datasource Methods
+    //MARK: - TableView Datasource Methods
     
     
     //有幾個
@@ -57,7 +55,7 @@ class TodoListViewController: UITableViewController {
         
     }
     
-    //MARK - TableView Delegate Methods
+    //MARK: - TableView Delegate Methods
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         //print("didSelectRowAt indexPath= \(indexPath)")
@@ -128,8 +126,7 @@ class TodoListViewController: UITableViewController {
         self.present(alert, animated: true, completion: nil)
     }
     
-    
-    // MARK - model manupulation methods
+    // MARK: - model manupulation methods
     
     func saveItems(){
         
@@ -142,10 +139,10 @@ class TodoListViewController: UITableViewController {
         tableView.reloadData()
     }
     
-    func loadItems(){
+    // 如果沒有給 with 就給一個預設值 Item.fetchRequest()
+    func loadItems(with request:NSFetchRequest<Item> = Item.fetchRequest()){
         
-        //這個 Item 是類別，一般不用寫類別，但是這邊要
-        let request : NSFetchRequest<Item> = Item.fetchRequest()
+        
         do{
             //所以我們這邊要抓取的是一個 Item 他是 NSManagedObject 類別，所以就是一個 row
             itemArray = try context.fetch(request)
@@ -153,10 +150,53 @@ class TodoListViewController: UITableViewController {
             print("Error fetching data from context \(error)")
         }
         
+        tableView.reloadData()
         
     }
     
-    
-    
 }
 
+
+//MARK: - search bar methods
+extension TodoListViewController : UISearchBarDelegate {
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        //建立一條新的請求
+        let request : NSFetchRequest<Item> = Item.fetchRequest()
+        //print(searchBar.text!)
+        //在 title 搜尋包含 searchBar.text 的東西
+        //https://academy.realm.io/posts/nspredicate-cheatsheet/
+        //搜尋預設是對大小寫和讀音敏感的
+        //c是case 大小寫 d 是diacritic ， 我們希望搜尋的時候對他們「不敏感」，所以加上cd
+        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+        
+        //排序
+        //sortDescriptor 是複數的，是一個 array ，但我們現在只需要一個排序的規則 ，所以放一個進去陣列裡面就好了
+        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+        
+        
+        loadItems(with: request)
+       
+    }
+    
+    //文字有改變就會觸發
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        
+        //如果有改變文字，並且改成沒有文字就會觸發
+        if searchBar.text?.count == 0 {
+            loadItems()
+            
+            //dispatchQueue 是一個類似管理員的人，他覺得排哪一個隊伍(線程)
+            //有的隊伍是24工作 有的是一天只工作一小時
+            //我們現在把它排到主線程 main ，抓回主線程才可以按搜尋框框裡面的X就可以回復初始狀態
+            //這裡看不懂，老師說要把他抓回「前景」主線程就對了
+            //async 異步
+            DispatchQueue.main.async {
+                //回到編輯searchBar之前的狀態（鼠標、鍵盤消失）
+                searchBar.resignFirstResponder()
+            }
+            
+            
+        }
+    }
+    
+}
