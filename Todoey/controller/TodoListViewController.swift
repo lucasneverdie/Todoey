@@ -13,6 +13,13 @@ class TodoListViewController: UITableViewController {
     
     var itemArray = [Item]()
     
+    
+    var selectedCategory : Category?{
+        didSet{
+            loadItems()
+        }
+    }
+    
     // AppDelegate 是 class 是藍圖，我們創立一個物件來使用
     // UIApplication.shared 是一個 singleton 的 app 實體
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
@@ -25,7 +32,7 @@ class TodoListViewController: UITableViewController {
         print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         
 
-        loadItems()
+        //loadItems()
         
     }
     
@@ -107,6 +114,7 @@ class TodoListViewController: UITableViewController {
             let newItem = Item(context: self.context)
             newItem.title = 想要新增的項目.text!
             newItem.done = false
+            newItem.parentCategory = self.selectedCategory
             
             //print("點了增加項目按鈕")
             //print(想要新增的項目.text!)
@@ -140,8 +148,23 @@ class TodoListViewController: UITableViewController {
     }
     
     // 如果沒有給 with 就給一個預設值 Item.fetchRequest()
-    func loadItems(with request:NSFetchRequest<Item> = Item.fetchRequest()){
+    func loadItems(with request:NSFetchRequest<Item> = Item.fetchRequest(), predicate: NSPredicate? = nil){
         
+        // 塞選種類
+        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
+        
+        // 可增加變成兩種塞選機制 另一種是搜尋
+        if let addtionalPredicate = predicate {
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate,addtionalPredicate])
+        }
+        else{
+            // 如果 input 沒寫 predicate 就只要 塞選目前種類就好了
+            request.predicate = categoryPredicate
+        }
+        
+//        let compoundPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate,predicate])
+//
+//        request.predicate = predicate
         
         do{
             //所以我們這邊要抓取的是一個 Item 他是 NSManagedObject 類別，所以就是一個 row
@@ -152,7 +175,7 @@ class TodoListViewController: UITableViewController {
         
         tableView.reloadData()
         
-    }
+    }  
     
 }
 
@@ -167,14 +190,14 @@ extension TodoListViewController : UISearchBarDelegate {
         //https://academy.realm.io/posts/nspredicate-cheatsheet/
         //搜尋預設是對大小寫和讀音敏感的
         //c是case 大小寫 d 是diacritic ， 我們希望搜尋的時候對他們「不敏感」，所以加上cd
-        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
         
         //排序
         //sortDescriptor 是複數的，是一個 array ，但我們現在只需要一個排序的規則 ，所以放一個進去陣列裡面就好了
         request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
         
         
-        loadItems(with: request)
+        loadItems(with: request, predicate: predicate)
        
     }
     
